@@ -1,0 +1,11 @@
+api:
+  url: "https://api.openai.com/v1"
+  key: "your-api-key-here"
+  model: "gpt-3.5-turbo"
+
+session:
+  max-idle-minutes: 15
+  max-tokens: 10000
+
+chat:
+  temperature: 1.0

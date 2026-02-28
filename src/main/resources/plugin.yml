@@ -1,0 +1,6 @@
+name: AgentChatAPI
+version: "1.0.0"
+main: dev.agentchat.AgentChatPlugin
+api-version: "1.21"
+folia-supported: true
+description: AI Chat API for Minecraft plugins - provides multi-session chat capabilities with OpenAI-compatible backends
