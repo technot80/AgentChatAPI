@@ -1,3 +1,12 @@
+# AgentChatAPI Configuration
+# AI Chat API for Minecraft plugins
+
+# Config version - DO NOT EDIT
+config-version: 2
+
+# Enable the API (set to true after configuring API key)
+enabled: false
+
 api:
   url: "https://api.openai.com/v1"
   key: "your-api-key-here"

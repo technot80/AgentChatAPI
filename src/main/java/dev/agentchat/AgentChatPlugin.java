@@ -21,6 +21,7 @@ public class AgentChatPlugin extends JavaPlugin {
     private SessionManager sessionManager;
     private OpenAIClient client;
     private BukkitTask cleanupTask;
+    private boolean initialized = false;
 
     @Override
     public void onEnable() {
@@ -30,19 +31,33 @@ public class AgentChatPlugin extends JavaPlugin {
 
         this.config = new Config(this);
 
+        if (!config.isEnabled()) {
+            getLogger().info("AgentChatAPI is disabled. Set enabled: true in config.yml to enable.");
+            return;
+        }
+
         if (!config.isValid()) {
             getLogger().severe("API key not configured! Please set api.key in config.yml");
             getLogger().severe("Plugin will not function without a valid API key.");
+            return;
         }
 
-        this.client = new OpenAIClient(config.getApiUrl(), config.getApiKey());
-        this.sessionManager = new SessionManager(this, config, client);
-
-        ChatAPI.initialize(sessionManager);
-
-        startCleanupTask();
-
+        initializeApi();
+        
         getLogger().info("AgentChatAPI has been enabled!");
+    }
+
+    private void initializeApi() {
+        try {
+            this.client = new OpenAIClient(config.getApiUrl(), config.getApiKey());
+            this.sessionManager = new SessionManager(this, config, client);
+            ChatAPI.initialize(sessionManager);
+            startCleanupTask();
+            initialized = true;
+        } catch (Exception e) {
+            getLogger().severe("Failed to initialize AgentChatAPI: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -60,7 +75,9 @@ public class AgentChatPlugin extends JavaPlugin {
         cleanupTask = new BukkitRunnable() {
             @Override
             public void run() {
-                ChatAPI.get().cleanupExpiredSessions();
+                if (initialized) {
+                    ChatAPI.get().cleanupExpiredSessions();
+                }
             }
         }.runTaskTimerAsynchronously(this, 6000L, 6000L);
     }
@@ -90,5 +107,9 @@ public class AgentChatPlugin extends JavaPlugin {
 
     public Config getPluginConfig() {
         return config;
+    }
+
+    public boolean isInitialized() {
+        return initialized;
     }
 }

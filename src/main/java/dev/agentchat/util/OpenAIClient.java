@@ -7,7 +7,13 @@ import dev.agentchat.api.ChatResponse;
 import dev.agentchat.api.ChatSessionImpl;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Scanner;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -16,25 +22,29 @@ public class OpenAIClient {
 
     private final String apiUrl;
     private final String apiKey;
-    private final okhttp3.OkHttpClient httpClient;
     private final Gson gson;
     private final ExecutorService executor;
 
     public OpenAIClient(String apiUrl, String apiKey) {
         this.apiUrl = apiUrl;
         this.apiKey = apiKey;
-        this.httpClient = new okhttp3.OkHttpClient.Builder()
-            .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
-            .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
-            .writeTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
-            .build();
         this.gson = new Gson();
         this.executor = Executors.newCachedThreadPool();
     }
 
     public CompletableFuture<ChatResponse> chat(List<ChatSessionImpl.ChatMessage> messages, String model, double temperature) {
         return CompletableFuture.supplyAsync(() -> {
+            HttpURLConnection connection = null;
             try {
+                URL url = new URL(apiUrl + "/chat/completions");
+                connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("POST");
+                connection.setRequestProperty("Authorization", "Bearer " + apiKey);
+                connection.setRequestProperty("Content-Type", "application/json");
+                connection.setDoOutput(true);
+                connection.setConnectTimeout(30000);
+                connection.setReadTimeout(60000);
+
                 JsonObject requestBody = new JsonObject();
                 requestBody.addProperty("model", model);
                 requestBody.addProperty("temperature", temperature);
@@ -51,41 +61,54 @@ public class OpenAIClient {
 
                 String jsonBody = gson.toJson(requestBody);
 
-                okhttp3.Request request = new okhttp3.Request.Builder()
-                    .url(apiUrl + "/chat/completions")
-                    .addHeader("Authorization", "Bearer " + apiKey)
-                    .addHeader("Content-Type", "application/json")
-                    .post(okhttp3.RequestBody.create(jsonBody, okhttp3.MediaType.parse("application/json")))
-                    .build();
+                try (OutputStream os = connection.getOutputStream()) {
+                    byte[] input = jsonBody.getBytes(StandardCharsets.UTF_8);
+                    os.write(input, 0, input.length);
+                }
 
-                try (okhttp3.Response response = httpClient.newCall(request).execute()) {
-                    if (!response.isSuccessful()) {
-                        String errorBody = response.body() != null ? response.body().string() : "Unknown error";
-                        return ChatResponse.error("API request failed: " + response.code() + " - " + errorBody);
-                    }
-
-                    String responseBody = response.body() != null ? response.body().string() : "";
-                    JsonObject jsonResponse = gson.fromJson(responseBody, JsonObject.class);
-
-                    if (jsonResponse.has("choices") && jsonResponse.getAsJsonArray("choices").size() > 0) {
-                        JsonObject choice = jsonResponse.getAsJsonArray("choices").get(0).getAsJsonObject();
-                        if (choice.has("message")) {
-                            JsonObject message = choice.getAsJsonObject("message");
-                            String content = message.get("content").getAsString();
-
-                            int tokens = estimateTokens(messages, content);
-
-                            return ChatResponse.success(content, tokens);
+                int responseCode = connection.getResponseCode();
+                if (responseCode != 200) {
+                    String errorBody = "";
+                    try (InputStream errorStream = connection.getErrorStream()) {
+                        if (errorStream != null) {
+                            try (Scanner scanner = new Scanner(errorStream, StandardCharsets.UTF_8).useDelimiter("\\A")) {
+                                errorBody = scanner.hasNext() ? scanner.next() : "Unknown error";
+                            }
                         }
                     }
-
-                    return ChatResponse.error("No response content from API");
+                    return ChatResponse.error("API request failed: " + responseCode + " - " + errorBody);
                 }
+
+                String responseBody;
+                try (InputStream inputStream = connection.getInputStream();
+                     Scanner scanner = new Scanner(inputStream, StandardCharsets.UTF_8).useDelimiter("\\A")) {
+                    responseBody = scanner.hasNext() ? scanner.next() : "";
+                }
+
+                JsonObject jsonResponse = gson.fromJson(responseBody, JsonObject.class);
+
+                if (jsonResponse.has("choices") && jsonResponse.getAsJsonArray("choices").size() > 0) {
+                    JsonObject choice = jsonResponse.getAsJsonArray("choices").get(0).getAsJsonObject();
+                    if (choice.has("message")) {
+                        JsonObject message = choice.getAsJsonObject("message");
+                        String content = message.get("content").getAsString();
+
+                        int tokens = estimateTokens(messages, content);
+
+                        return ChatResponse.success(content, tokens);
+                    }
+                }
+
+                return ChatResponse.error("No response content from API");
 
             } catch (IOException e) {
                 return ChatResponse.error("Network error: " + e.getMessage());
             } catch (Exception e) {
                 return ChatResponse.error("Unexpected error: " + e.getMessage());
+            } finally {
+                if (connection != null) {
+                    connection.disconnect();
+                }
             }
         }, executor);
     }

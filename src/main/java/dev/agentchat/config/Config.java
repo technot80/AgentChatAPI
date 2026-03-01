@@ -8,6 +8,8 @@ import java.io.IOException;
 
 public class Config {
 
+    private static final int CURRENT_CONFIG_VERSION = 2;
+
     private final AgentChatPlugin plugin;
     private final File file;
     private YamlConfiguration yaml;
@@ -20,6 +22,32 @@ public class Config {
 
     public void reload() {
         yaml = YamlConfiguration.loadConfiguration(file);
+        checkAndUpgradeConfig();
+    }
+
+    private void checkAndUpgradeConfig() {
+        int configVersion = yaml.getInt("config-version", 1);
+        
+        if (configVersion < CURRENT_CONFIG_VERSION) {
+            plugin.getLogger().info("Upgrading config from version " + configVersion + " to " + CURRENT_CONFIG_VERSION);
+            upgradeConfig(configVersion);
+            configVersion = CURRENT_CONFIG_VERSION;
+        }
+        
+        yaml.set("config-version", CURRENT_CONFIG_VERSION);
+        save();
+    }
+
+    private void upgradeConfig(int fromVersion) {
+        if (fromVersion < 2) {
+            upgradeToV2();
+        }
+    }
+
+    private void upgradeToV2() {
+        plugin.getLogger().info("Applying upgrade to v2 (enabled flag)...");
+        
+        yaml.set("enabled", yaml.getBoolean("enabled", false));
     }
 
     public void save() {
@@ -28,6 +56,10 @@ public class Config {
         } catch (IOException e) {
             plugin.getLogger().severe("Could not save config.yml: " + e.getMessage());
         }
+    }
+
+    public boolean isEnabled() {
+        return yaml.getBoolean("enabled", false);
     }
 
     public String getApiUrl() {
@@ -55,7 +87,14 @@ public class Config {
     }
 
     public boolean isValid() {
+        if (!isEnabled()) {
+            return false;
+        }
         String key = getApiKey();
         return key != null && !key.isEmpty() && !key.equals("your-api-key-here");
+    }
+
+    public int getConfigVersion() {
+        return yaml.getInt("config-version", 1);
     }
 }
