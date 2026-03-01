@@ -54,7 +54,10 @@ public class OpenAIClient {
 
                 if (provider != null && !provider.isEmpty()) {
                     JsonObject providerObj = new JsonObject();
-                    providerObj.addProperty("slug", provider);
+                    JsonArray orderArray = new JsonArray();
+                    orderArray.add(provider);
+                    providerObj.add("order", orderArray);
+                    providerObj.addProperty("allow_fallbacks", false);
                     requestBody.add("provider", providerObj);
                 }
 
