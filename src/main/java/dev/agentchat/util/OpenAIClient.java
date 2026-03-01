@@ -22,12 +22,14 @@ public class OpenAIClient {
 
     private final String apiUrl;
     private final String apiKey;
+    private final String provider;
     private final Gson gson;
     private final ExecutorService executor;
 
-    public OpenAIClient(String apiUrl, String apiKey) {
+    public OpenAIClient(String apiUrl, String apiKey, String provider) {
         this.apiUrl = apiUrl;
         this.apiKey = apiKey;
+        this.provider = provider;
         this.gson = new Gson();
         this.executor = Executors.newCachedThreadPool();
     }
@@ -49,6 +51,12 @@ public class OpenAIClient {
                 requestBody.addProperty("model", model);
                 requestBody.addProperty("temperature", temperature);
                 requestBody.addProperty("stream", false);
+
+                if (provider != null && !provider.isEmpty()) {
+                    JsonObject providerObj = new JsonObject();
+                    providerObj.addProperty("slug", provider);
+                    requestBody.add("provider", providerObj);
+                }
 
                 JsonArray messagesArray = new JsonArray();
                 for (ChatSessionImpl.ChatMessage msg : messages) {

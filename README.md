@@ -27,11 +27,12 @@ Instead of each plugin developer building their own AI integration, they can sim
 ## Features
 
 - **Multi-session support** - Create unlimited independent chat sessions
-- **OpenAI-compatible** - Works with OpenAI, Ollama, LM Studio, LocalAI, and more
+- **OpenAI-compatible** - Works with OpenAI, Ollama, LM Studio, LocalAI, OpenRouter, and more
+- **Provider support** - Lock to specific providers (useful for OpenRouter cost management)
 - **Automatic cleanup** - Sessions expire after idle time or token limits
 - **Async everything** - Non-blocking API calls, safe for any thread
 - **Folia & Paper** - Works on both server types
-- **Lightweight** - Minimal dependencies, focused on one job
+- **Lightweight** - No external dependencies, focused on one job
 
 ---
 
@@ -42,7 +43,8 @@ Instead of each plugin developer building their own AI integration, they can sim
 1. Download the latest release
 2. Drop it into your `plugins/` folder
 3. Configure `config.yml` with your API key and preferred settings
-4. Restart or reload the server
+4. Set `enabled: true` in config
+5. Restart or reload the server
 
 ### Configuration
 
@@ -51,6 +53,7 @@ api:
   url: "https://api.openai.com/v1"
   key: "your-api-key-here"
   model: "gpt-3.5-turbo"
+  provider: ""  # Optional: lock to specific provider (mainly for OpenRouter)
 
 session:
   max-idle-minutes: 15
@@ -68,6 +71,19 @@ chat:
 | Ollama | `http://localhost:11434/v1` |
 | LM Studio | `http://localhost:1234/v1` |
 | LocalAI | `http://localhost:8080/v1` |
+| OpenRouter | `https://openrouter.ai/api/v1` |
+
+### OpenRouter with Provider
+
+To lock OpenRouter to a specific provider (helps with cost management):
+
+```yaml
+api:
+  url: "https://openrouter.ai/api/v1"
+  key: "your-openrouter-key"
+  model: "gpt-3.5-turbo"
+  provider: "openai"  # Lock to OpenAI provider
+```
 
 ---
 
@@ -113,9 +129,9 @@ if (apiPlugin != null && apiPlugin.isEnabled()) {
 
 ## Real-World Example
 
-This API is being used in **FakePlayersFolia** to give fake players AI-powered chat capabilities. Each fake player can have its own personality defined in a `.md` file, and they can actually hold conversations with real players.
+This API is being used in **FakePlayersFolia** to give fake players AI-powered chat capabilities. Each fake player can have its own personality, and they can actually hold conversations with real players.
 
-Check out the [FakePlayersFolia](https://github.com/your-repo/fakeplayersfolia) repository for a complete implementation example.
+Check out the [FakePlayersFolia](https://github.com/technot80/FakePlayers) repository for a complete implementation example.
 
 ---
 

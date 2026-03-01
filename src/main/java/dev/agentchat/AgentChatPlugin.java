@@ -49,7 +49,7 @@ public class AgentChatPlugin extends JavaPlugin {
 
     private void initializeApi() {
         try {
-            this.client = new OpenAIClient(config.getApiUrl(), config.getApiKey());
+            this.client = new OpenAIClient(config.getApiUrl(), config.getApiKey(), config.getProvider());
             this.sessionManager = new SessionManager(this, config, client);
             ChatAPI.initialize(sessionManager);
             startCleanupTask();

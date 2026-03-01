@@ -8,13 +8,22 @@ config-version: 2
 enabled: false
 
 api:
+  # OpenAI-compatible API endpoint
   url: "https://api.openai.com/v1"
+  # Your API key (or token for self-hosted models)
   key: "your-api-key-here"
+  # Model identifier
   model: "gpt-3.5-turbo"
+  # Provider (optional, mainly for OpenRouter to lock to a specific provider)
+  # Example: "openai", "anthropic", "azure"
+  provider: ""
 
 session:
+  # Minutes of inactivity before session auto-expires
   max-idle-minutes: 15
+  # Approximate max tokens per session (chars / 4)
   max-tokens: 10000
 
 chat:
+  # LLM temperature (0.0 - 2.0)
   temperature: 1.0

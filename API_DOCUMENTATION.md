@@ -11,7 +11,8 @@ AgentChatAPI provides a simple interface for any Minecraft plugin to add AI-powe
 ### Features
 
 - **Multi-session support**: Create unlimited independent chat sessions with separate contexts
-- **OpenAI-compatible**: Works with OpenAI, Ollama, LM Studio, LocalAI, and any OpenAI-compatible API
+- **OpenAI-compatible**: Works with OpenAI, Ollama, LM Studio, LocalAI, OpenRouter, and any OpenAI-compatible API
+- **Provider support**: Lock to specific providers (useful for OpenRouter cost management)
 - **Automatic session management**: Sessions auto-expire after idle time or token limit
 - **Async operations**: All API calls are non-blocking
 - **Folia & Paper compatible**: Works on both server types
@@ -30,6 +31,9 @@ api:
   key: "your-api-key-here"
   # Model identifier
   model: "gpt-3.5-turbo"
+  # Provider (optional, mainly for OpenRouter to lock to a specific provider)
+  # Example: "openai", "anthropic", "azure"
+  provider: ""
 
 session:
   # Minutes of inactivity before session auto-expires
@@ -50,6 +54,7 @@ api:
   url: "http://localhost:11434/v1"
   key: "ollama"
   model: "llama3"
+  provider: ""
 ```
 
 **LM Studio:**
@@ -58,6 +63,7 @@ api:
   url: "http://localhost:1234/v1"
   key: "lm-studio"
   model: "lmstudio-community/Mistral-7B-Instruct-v0.2"
+  provider: ""
 ```
 
 **OpenAI Official:**
@@ -66,6 +72,16 @@ api:
   url: "https://api.openai.com/v1"
   key: "sk-..."
   model: "gpt-4o"
+  provider: ""
+```
+
+**OpenRouter (with provider):**
+```yaml
+api:
+  url: "https://openrouter.ai/api/v1"
+  key: "your-openrouter-key"
+  model: "gpt-3.5-turbo"
+  provider: "openai"  # Lock to OpenAI provider (cheaper than auto-select)
 ```
 
 ---
@@ -259,3 +275,4 @@ private String loadPersonality(String entityId) {
 - Always check `response.isSuccess()` before using content
 - Use `.thenAccept()` or async tasks instead of `.join()` on main thread
 - Call `api.endSession()` when your entity is removed/despawned
+- The `provider` field is OpenRouter-specific - it will be ignored by other APIs

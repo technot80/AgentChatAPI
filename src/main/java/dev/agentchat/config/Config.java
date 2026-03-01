@@ -32,10 +32,9 @@ public class Config {
             plugin.getLogger().info("Upgrading config from version " + configVersion + " to " + CURRENT_CONFIG_VERSION);
             upgradeConfig(configVersion);
             configVersion = CURRENT_CONFIG_VERSION;
+            yaml.set("config-version", CURRENT_CONFIG_VERSION);
+            save();
         }
-        
-        yaml.set("config-version", CURRENT_CONFIG_VERSION);
-        save();
     }
 
     private void upgradeConfig(int fromVersion) {
@@ -72,6 +71,10 @@ public class Config {
 
     public String getModel() {
         return yaml.getString("api.model", "gpt-3.5-turbo");
+    }
+
+    public String getProvider() {
+        return yaml.getString("api.provider", "");
     }
 
     public int getMaxIdleMinutes() {
