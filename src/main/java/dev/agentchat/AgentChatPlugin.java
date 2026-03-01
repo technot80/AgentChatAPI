@@ -5,14 +5,17 @@ import dev.agentchat.config.Config;
 import dev.agentchat.manager.SessionManager;
 import dev.agentchat.util.OpenAIClient;
 import org.bukkit.Bukkit;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class AgentChatPlugin extends JavaPlugin {
 
@@ -22,6 +25,7 @@ public class AgentChatPlugin extends JavaPlugin {
     private OpenAIClient client;
     private BukkitTask cleanupTask;
     private boolean initialized = false;
+    private ScheduledExecutorService executor;
 
     @Override
     public void onEnable() {
@@ -52,8 +56,10 @@ public class AgentChatPlugin extends JavaPlugin {
             this.client = new OpenAIClient(config.getApiUrl(), config.getApiKey(), config.getProvider());
             this.sessionManager = new SessionManager(this, config, client);
             ChatAPI.initialize(sessionManager);
-            startCleanupTask();
             initialized = true;
+            
+            executor = Executors.newSingleThreadScheduledExecutor();
+            executor.schedule(this::startCleanupTask, 2, TimeUnit.SECONDS);
         } catch (Exception e) {
             getLogger().severe("Failed to initialize AgentChatAPI: " + e.getMessage());
             e.printStackTrace();
@@ -68,18 +74,31 @@ public class AgentChatPlugin extends JavaPlugin {
         if (sessionManager != null) {
             sessionManager.shutdown();
         }
+        if (executor != null) {
+            executor.shutdown();
+        }
         getLogger().info("AgentChatAPI has been disabled!");
     }
 
     private void startCleanupTask() {
-        cleanupTask = new BukkitRunnable() {
-            @Override
-            public void run() {
+        try {
+            Method getScheduler = Bukkit.class.getMethod("getGlobalRegionScheduler");
+            Object scheduler = getScheduler.invoke(null);
+            
+            Method runAtFixedRate = scheduler.getClass().getMethod("runAtFixedRate", JavaPlugin.class, Runnable.class, long.class, long.class);
+            cleanupTask = (BukkitTask) runAtFixedRate.invoke(scheduler, this, (Runnable) () -> {
                 if (initialized) {
                     ChatAPI.get().cleanupExpiredSessions();
                 }
-            }
-        }.runTaskTimerAsynchronously(this, 6000L, 6000L);
+            }, 6000L, 6000L);
+        } catch (Exception e) {
+            getLogger().warning("Using standard scheduler");
+            cleanupTask = Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
+                if (initialized) {
+                    ChatAPI.get().cleanupExpiredSessions();
+                }
+            }, 6000L, 6000L);
+        }
     }
 
     private void saveDefaultResources() {
