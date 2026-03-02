@@ -16,6 +16,7 @@ public class SessionManager {
     private final Config config;
     private final OpenAIClient client;
     private final Map<String, ChatSessionImpl> sessions;
+    private final dev.agentchat.util.RateLimiter rateLimiter;
     private volatile boolean cleanupRunning = false;
 
     public SessionManager(AgentChatPlugin plugin, Config config, OpenAIClient client) {
@@ -23,6 +24,11 @@ public class SessionManager {
         this.config = config;
         this.client = client;
         this.sessions = new ConcurrentHashMap<>();
+        this.rateLimiter = new dev.agentchat.util.RateLimiter(
+            config.isRateLimitEnabled(),
+            config.getRateLimitGlobalPerMinute(),
+            config.getRateLimitPerSessionPerMinute()
+        );
     }
 
     public ChatSession createSession(String sessionName, String systemPrompt) {
@@ -39,6 +45,10 @@ public class SessionManager {
 
     public ChatSession getSession(String sessionName) {
         return sessions.get(sessionName);
+    }
+
+    public boolean allowRequest(String sessionName) {
+        return rateLimiter.tryAcquire(sessionName);
     }
 
     public boolean hasSession(String sessionName) {

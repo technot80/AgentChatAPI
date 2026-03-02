@@ -38,6 +38,10 @@ public class OpenAIClient {
         return CompletableFuture.supplyAsync(() -> {
             HttpURLConnection connection = null;
             try {
+                if (!apiUrl.startsWith("https://")) {
+                    return ChatResponse.error("API URL must use https");
+                }
+
                 URL url = new URL(apiUrl + "/chat/completions");
                 connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("POST");
@@ -87,6 +91,9 @@ public class OpenAIClient {
                             }
                         }
                     }
+                    if (errorBody.length() > 500) {
+                        errorBody = errorBody.substring(0, 500) + "...";
+                    }
                     return ChatResponse.error("API request failed: " + responseCode + " - " + errorBody);
                 }
 
@@ -94,6 +101,10 @@ public class OpenAIClient {
                 try (InputStream inputStream = connection.getInputStream();
                      Scanner scanner = new Scanner(inputStream, StandardCharsets.UTF_8).useDelimiter("\\A")) {
                     responseBody = scanner.hasNext() ? scanner.next() : "";
+                }
+
+                if (responseBody.length() > 10000) {
+                    return ChatResponse.error("API response too large");
                 }
 
                 JsonObject jsonResponse = gson.fromJson(responseBody, JsonObject.class);

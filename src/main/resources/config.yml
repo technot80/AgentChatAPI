@@ -2,7 +2,7 @@
 # AI Chat API for Minecraft plugins
 
 # Config version - DO NOT EDIT
-config-version: 2
+config-version: 3
 
 # Enable the API (set to true after configuring API key)
 enabled: false
@@ -27,3 +27,12 @@ session:
 chat:
   # LLM temperature (0.0 - 2.0)
   temperature: 1.0
+
+# Rate limiting (per minute)
+rate-limit:
+  # Master switch
+  enabled: true
+  # Max total requests across all sessions
+  global-per-minute: 60
+  # Max requests per session
+  per-session-per-minute: 20
