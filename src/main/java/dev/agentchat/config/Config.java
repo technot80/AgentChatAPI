@@ -77,9 +77,6 @@ public class Config {
         if (url == null || url.isBlank()) {
             return "https://api.openai.com/v1";
         }
-        if (!url.startsWith("https://")) {
-            plugin.getLogger().severe("API URL must use https. Provided: " + url);
-        }
         return url;
     }
 
@@ -124,10 +121,7 @@ public class Config {
             return false;
         }
         String key = getApiKey();
-        String url = getApiUrl();
-        boolean keyValid = key != null && !key.isEmpty() && !key.equals("your-api-key-here");
-        boolean urlValid = url != null && url.startsWith("https://");
-        return keyValid && urlValid;
+        return key != null && !key.isEmpty() && !key.equals("your-api-key-here");
     }
 
     public int getConfigVersion() {

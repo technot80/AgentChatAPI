@@ -73,9 +73,9 @@ rate-limit:
 | Service | URL Example |
 |---------|-------------|
 | OpenAI | `https://api.openai.com/v1` |
-| Ollama | `http://localhost:11434/v1` (not supported; requires https) |
-| LM Studio | `http://localhost:1234/v1` (not supported; requires https) |
-| LocalAI | `http://localhost:8080/v1` (not supported; requires https) |
+| Ollama | `http://localhost:11434/v1` |
+| LM Studio | `http://localhost:1234/v1` |
+| LocalAI | `http://localhost:8080/v1` |
 | OpenRouter | `https://openrouter.ai/api/v1` |
 
 ### OpenRouter with Provider

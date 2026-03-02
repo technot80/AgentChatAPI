@@ -38,10 +38,6 @@ public class OpenAIClient {
         return CompletableFuture.supplyAsync(() -> {
             HttpURLConnection connection = null;
             try {
-                if (!apiUrl.startsWith("https://")) {
-                    return ChatResponse.error("API URL must use https");
-                }
-
                 URL url = new URL(apiUrl + "/chat/completions");
                 connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("POST");
