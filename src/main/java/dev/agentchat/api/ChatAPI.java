@@ -39,6 +39,13 @@ public class ChatAPI {
         return sessionManager.getSession(sessionName);
     }
 
+    public boolean allowRequest(String sessionName) {
+        if (sessionManager == null) {
+            return false;
+        }
+        return sessionManager.allowRequest(sessionName);
+    }
+
     public boolean hasSession(String sessionName) {
         if (sessionManager == null) {
             return false;

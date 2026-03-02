@@ -8,7 +8,7 @@ import java.io.IOException;
 
 public class Config {
 
-    private static final int CURRENT_CONFIG_VERSION = 2;
+    private static final int CURRENT_CONFIG_VERSION = 3;
 
     private final AgentChatPlugin plugin;
     private final File file;
@@ -41,12 +41,23 @@ public class Config {
         if (fromVersion < 2) {
             upgradeToV2();
         }
+        if (fromVersion < 3) {
+            upgradeToV3();
+        }
     }
 
     private void upgradeToV2() {
         plugin.getLogger().info("Applying upgrade to v2 (enabled flag)...");
         
         yaml.set("enabled", yaml.getBoolean("enabled", false));
+    }
+
+    private void upgradeToV3() {
+        plugin.getLogger().info("Applying upgrade to v3 (rate limits)...");
+
+        yaml.set("rate-limit.enabled", yaml.getBoolean("rate-limit.enabled", true));
+        yaml.set("rate-limit.global-per-minute", yaml.getInt("rate-limit.global-per-minute", 60));
+        yaml.set("rate-limit.per-session-per-minute", yaml.getInt("rate-limit.per-session-per-minute", 20));
     }
 
     public void save() {
@@ -62,7 +73,11 @@ public class Config {
     }
 
     public String getApiUrl() {
-        return yaml.getString("api.url", "https://api.openai.com/v1");
+        String url = yaml.getString("api.url", "https://api.openai.com/v1");
+        if (url == null || url.isBlank()) {
+            return "https://api.openai.com/v1";
+        }
+        return url;
     }
 
     public String getApiKey() {
@@ -87,6 +102,18 @@ public class Config {
 
     public double getTemperature() {
         return yaml.getDouble("chat.temperature", 1.0);
+    }
+
+    public boolean isRateLimitEnabled() {
+        return yaml.getBoolean("rate-limit.enabled", true);
+    }
+
+    public int getRateLimitGlobalPerMinute() {
+        return yaml.getInt("rate-limit.global-per-minute", 60);
+    }
+
+    public int getRateLimitPerSessionPerMinute() {
+        return yaml.getInt("rate-limit.per-session-per-minute", 20);
     }
 
     public boolean isValid() {

@@ -3,7 +3,7 @@
 A Minecraft server plugin that provides a multi-session AI chat API for other plugins.
 
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![Version](https://img.shields.io/badge/version-1.0.1-blue)
 ![API](https://img.shields.io/badge/api-1.21-orange)
 
 ---
@@ -61,6 +61,11 @@ session:
 
 chat:
   temperature: 1.0
+
+rate-limit:
+  enabled: true
+  global-per-minute: 60
+  per-session-per-minute: 20
 ```
 
 ### Supported Backends
@@ -83,6 +88,17 @@ api:
   key: "your-openrouter-key"
   model: "gpt-3.5-turbo"
   provider: "openai"  # Lock to OpenAI provider
+```
+
+### Rate Limiting
+
+AgentChatAPI enforces rate limits per session and globally to protect your server and API budget.
+
+```yaml
+rate-limit:
+  enabled: true
+  global-per-minute: 60
+  per-session-per-minute: 20
 ```
 
 ---

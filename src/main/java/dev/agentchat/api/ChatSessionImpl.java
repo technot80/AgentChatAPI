@@ -43,6 +43,12 @@ public class ChatSessionImpl implements ChatSession {
             );
         }
 
+        if (!ChatAPI.get().allowRequest(name)) {
+            return CompletableFuture.completedFuture(
+                ChatResponse.error("Rate limit exceeded")
+            );
+        }
+
         context.add(new ChatMessage("user", message));
         lastActivityTime = System.currentTimeMillis();
 

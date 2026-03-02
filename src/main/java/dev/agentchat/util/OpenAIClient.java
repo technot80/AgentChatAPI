@@ -87,6 +87,9 @@ public class OpenAIClient {
                             }
                         }
                     }
+                    if (errorBody.length() > 500) {
+                        errorBody = errorBody.substring(0, 500) + "...";
+                    }
                     return ChatResponse.error("API request failed: " + responseCode + " - " + errorBody);
                 }
 
@@ -94,6 +97,10 @@ public class OpenAIClient {
                 try (InputStream inputStream = connection.getInputStream();
                      Scanner scanner = new Scanner(inputStream, StandardCharsets.UTF_8).useDelimiter("\\A")) {
                     responseBody = scanner.hasNext() ? scanner.next() : "";
+                }
+
+                if (responseBody.length() > 10000) {
+                    return ChatResponse.error("API response too large");
                 }
 
                 JsonObject jsonResponse = gson.fromJson(responseBody, JsonObject.class);
